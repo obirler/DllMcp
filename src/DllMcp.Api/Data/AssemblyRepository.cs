@@ -1,25 +1,29 @@
-using Dapper;
 using DllMcp.Api.Models;
-using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace DllMcp.Api.Data;
 
 public class AssemblyRepository
 {
-    private readonly string _connectionString;
+    private readonly DllMcpDbContext _context;
 
-    public AssemblyRepository(string connectionString)
+    public AssemblyRepository(DllMcpDbContext context)
     {
-        _connectionString = connectionString;
+        _context = context;
     }
 
     public async Task<string> SaveAssemblyAsync(AssemblyInfo assembly)
     {
-        using var connection = new SqliteConnection(_connectionString);
-        await connection.ExecuteAsync(
-            @"INSERT OR REPLACE INTO Assemblies (Id, Name, HasXmlDocumentation, AssemblyPath) 
-              VALUES (@Id, @Name, @HasXmlDocumentation, @AssemblyPath)",
-            assembly);
+        var existing = await _context.Assemblies.FindAsync(assembly.Id);
+        if (existing != null)
+        {
+            _context.Entry(existing).CurrentValues.SetValues(assembly);
+        }
+        else
+        {
+            await _context.Assemblies.AddAsync(assembly);
+        }
+        await _context.SaveChangesAsync();
         return assembly.Id;
     }
 
@@ -29,73 +33,66 @@ public class AssemblyRepository
         int page = 1,
         int pageSize = 20)
     {
-        using var connection = new SqliteConnection(_connectionString);
         var offset = (page - 1) * pageSize;
 
-        var sql = @"
-            SELECT * FROM Types 
-            WHERE AssemblyId = @AssemblyId";
+        var query = _context.Types
+            .Where(t => t.AssemblyId == assemblyId);
 
         if (!string.IsNullOrEmpty(search))
         {
-            sql += " AND (FullName LIKE @Search OR Name LIKE @Search OR Namespace LIKE @Search)";
+            query = query.Where(t => 
+                EF.Functions.Like(t.FullName, $"%{search}%") ||
+                EF.Functions.Like(t.Name, $"%{search}%") ||
+                EF.Functions.Like(t.Namespace, $"%{search}%"));
         }
 
-        sql += " ORDER BY FullName LIMIT @PageSize OFFSET @Offset";
-
-        return await connection.QueryAsync<TypeInfo>(sql, new
-        {
-            AssemblyId = assemblyId,
-            Search = $"%{search}%",
-            PageSize = pageSize,
-            Offset = offset
-        });
+        return await query
+            .OrderBy(t => t.FullName)
+            .Skip(offset)
+            .Take(pageSize)
+            .ToListAsync();
     }
 
     public async Task SaveTypeAsync(TypeInfo type)
     {
-        using var connection = new SqliteConnection(_connectionString);
-        await connection.ExecuteAsync(
-            @"INSERT OR REPLACE INTO Types 
-              (Id, AssemblyId, Namespace, Name, FullName, Kind, BaseType, Summary) 
-              VALUES (@Id, @AssemblyId, @Namespace, @Name, @FullName, @Kind, @BaseType, @Summary)",
-            type);
+        var existing = await _context.Types.FindAsync(type.Id);
+        if (existing != null)
+        {
+            _context.Entry(existing).CurrentValues.SetValues(type);
+        }
+        else
+        {
+            await _context.Types.AddAsync(type);
+        }
+        await _context.SaveChangesAsync();
     }
 
     public async Task SaveMemberAsync(MemberData member)
     {
-        using var connection = new SqliteConnection(_connectionString);
-        await connection.ExecuteAsync(
-            @"INSERT OR REPLACE INTO Members 
-              (Id, TypeId, Name, MemberKind, Signature, 
-               XmlSummary, XmlRemarks, XmlReturns, XmlExample, XmlParams, XmlExceptions,
-               AiSummary, AiExample, LastUpdated) 
-              VALUES 
-              (@Id, @TypeId, @Name, @MemberKind, @Signature,
-               @XmlSummary, @XmlRemarks, @XmlReturns, @XmlExample, @XmlParams, @XmlExceptions,
-               @AiSummary, @AiExample, @LastUpdated)",
-            member);
+        var existing = await _context.Members.FindAsync(member.Id);
+        if (existing != null)
+        {
+            _context.Entry(existing).CurrentValues.SetValues(member);
+        }
+        else
+        {
+            await _context.Members.AddAsync(member);
+        }
+        await _context.SaveChangesAsync();
     }
 
     public async Task<MemberData?> GetMemberAsync(string memberId)
     {
-        using var connection = new SqliteConnection(_connectionString);
-        return await connection.QueryFirstOrDefaultAsync<MemberData>(
-            "SELECT * FROM Members WHERE Id = @Id",
-            new { Id = memberId });
+        return await _context.Members.FindAsync(memberId);
     }
 
     public async Task<AssemblyInfo?> GetAssemblyAsync(string assemblyId)
     {
-        using var connection = new SqliteConnection(_connectionString);
-        return await connection.QueryFirstOrDefaultAsync<AssemblyInfo>(
-            "SELECT * FROM Assemblies WHERE Id = @Id",
-            new { Id = assemblyId });
+        return await _context.Assemblies.FindAsync(assemblyId);
     }
 
     public async Task<IEnumerable<AssemblyInfo>> GetAssembliesAsync()
     {
-        using var connection = new SqliteConnection(_connectionString);
-        return await connection.QueryAsync<AssemblyInfo>("SELECT * FROM Assemblies");
+        return await _context.Assemblies.ToListAsync();
     }
 }

@@ -1,7 +1,7 @@
 using DllMcp.Api.Data;
 using DllMcp.Api.Models;
 using DllMcp.Api.Services;
-using Dapper;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,18 +28,23 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure database
+// Configure Entity Framework Core with SQLite
 var connectionString = "Data Source=dllmcp.db";
-builder.Services.AddSingleton(new DatabaseInitializer(connectionString));
-builder.Services.AddSingleton(new AssemblyRepository(connectionString));
-builder.Services.AddSingleton<AssemblyLoaderService>();
+builder.Services.AddDbContext<DllMcpDbContext>(options =>
+    options.UseSqlite(connectionString));
+
+builder.Services.AddScoped<AssemblyRepository>();
+builder.Services.AddScoped<AssemblyLoaderService>();
 builder.Services.AddSingleton<DecompilerService>();
 
 var app = builder.Build();
 
 // Initialize database
-var dbInitializer = app.Services.GetRequiredService<DatabaseInitializer>();
-dbInitializer.Initialize();
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<DllMcpDbContext>();
+    await dbContext.Database.EnsureCreatedAsync();
+}
 
 app.UseCors();
 app.UseStaticFiles();
@@ -102,6 +107,7 @@ app.MapGet("/api/members/{memberId}", async (
     string memberId,
     AssemblyRepository repository,
     DecompilerService decompiler,
+    DllMcpDbContext dbContext,
     bool includeSource = false) =>
 {
     var member = await repository.GetMemberAsync(memberId);
@@ -125,15 +131,13 @@ app.MapGet("/api/members/{memberId}", async (
 
     if (includeSource)
     {
-        // Get the assembly info to find the path
+        // Get the assembly info to find the path using EF Core
         var typeId = member.TypeId;
-        var assemblyIdQuery = "SELECT AssemblyId FROM Types WHERE Id = @TypeId";
-        using var connection = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
-        var assemblyId = await connection.QueryFirstOrDefaultAsync<string>(assemblyIdQuery, new { TypeId = typeId });
+        var type = await dbContext.Types.FindAsync(typeId);
         
-        if (!string.IsNullOrEmpty(assemblyId))
+        if (type != null)
         {
-            var assembly = await repository.GetAssemblyAsync(assemblyId);
+            var assembly = await repository.GetAssemblyAsync(type.AssemblyId);
             if (assembly?.AssemblyPath != null && File.Exists(assembly.AssemblyPath))
             {
                 var sourceCode = decompiler.DecompileMember(assembly.AssemblyPath, member.Id);
