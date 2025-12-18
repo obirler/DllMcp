@@ -85,8 +85,8 @@ Stores member information (methods, properties, fields, events) with both XML an
 ## Technology Stack
 
 - .NET 9 (ASP.NET Core Minimal API)
-- SQLite (via Microsoft.Data.Sqlite)
-- Dapper (micro-ORM)
+- SQLite (via Entity Framework Core)
+- Entity Framework Core 9.0 (ORM)
 - ICSharpCode.Decompiler (C# decompilation)
 - Plain HTML/CSS/JavaScript (frontend)
 

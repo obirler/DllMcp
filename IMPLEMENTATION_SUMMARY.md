@@ -169,7 +169,7 @@ curl -X POST http://localhost:5000/mcp/dll.getMemberDetails \
 
 ## Technology Stack
 - **Backend**: .NET 9, ASP.NET Core Minimal API
-- **Database**: SQLite 3 with Dapper ORM
+- **Database**: SQLite 3 with Entity Framework Core
 - **Decompiler**: ICSharpCode.Decompiler 8.2
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Testing**: Bash scripts, curl
