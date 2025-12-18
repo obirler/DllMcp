@@ -17,8 +17,8 @@ public class AssemblyRepository
     {
         using var connection = new SqliteConnection(_connectionString);
         await connection.ExecuteAsync(
-            @"INSERT OR REPLACE INTO Assemblies (Id, Name, HasXmlDocumentation) 
-              VALUES (@Id, @Name, @HasXmlDocumentation)",
+            @"INSERT OR REPLACE INTO Assemblies (Id, Name, HasXmlDocumentation, AssemblyPath) 
+              VALUES (@Id, @Name, @HasXmlDocumentation, @AssemblyPath)",
             assembly);
         return assembly.Id;
     }
@@ -83,6 +83,14 @@ public class AssemblyRepository
         return await connection.QueryFirstOrDefaultAsync<MemberData>(
             "SELECT * FROM Members WHERE Id = @Id",
             new { Id = memberId });
+    }
+
+    public async Task<AssemblyInfo?> GetAssemblyAsync(string assemblyId)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        return await connection.QueryFirstOrDefaultAsync<AssemblyInfo>(
+            "SELECT * FROM Assemblies WHERE Id = @Id",
+            new { Id = assemblyId });
     }
 
     public async Task<IEnumerable<AssemblyInfo>> GetAssembliesAsync()

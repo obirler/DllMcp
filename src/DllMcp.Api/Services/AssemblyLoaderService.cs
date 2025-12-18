@@ -25,6 +25,12 @@ public class AssemblyLoaderService
         var assembly = loadContext.LoadFromAssemblyPath(dllPath);
         var assemblyId = Guid.NewGuid().ToString();
 
+        // Copy assembly to persistent storage
+        var storageDir = Path.Combine(Directory.GetCurrentDirectory(), "assemblies");
+        Directory.CreateDirectory(storageDir);
+        var storedPath = Path.Combine(storageDir, $"{assemblyId}.dll");
+        File.Copy(dllPath, storedPath, overwrite: true);
+
         // Parse XML documentation if provided
         XmlDocumentationParser? xmlParser = null;
         bool hasXml = false;
@@ -40,7 +46,8 @@ public class AssemblyLoaderService
         {
             Id = assemblyId,
             Name = assembly.GetName().Name ?? "Unknown",
-            HasXmlDocumentation = hasXml
+            HasXmlDocumentation = hasXml,
+            AssemblyPath = storedPath
         };
         await _repository.SaveAssemblyAsync(assemblyInfo);
 

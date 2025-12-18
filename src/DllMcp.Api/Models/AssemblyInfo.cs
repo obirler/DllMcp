@@ -5,4 +5,5 @@ public class AssemblyInfo
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public bool HasXmlDocumentation { get; set; }
+    public string? AssemblyPath { get; set; }
 }

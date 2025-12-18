@@ -1,17 +1,30 @@
 using DllMcp.Api.Data;
 using DllMcp.Api.Models;
 using DllMcp.Api.Services;
+using Dapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add CORS
+// Add CORS - configure appropriately for production
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        if (builder.Environment.IsDevelopment())
+        {
+            // Development: Allow any origin for testing
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
+        else
+        {
+            // Production: Restrict to specific origins
+            // TODO: Configure allowed origins from appsettings.json
+            policy.WithOrigins("https://yourdomain.com")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
     });
 });
 
@@ -112,13 +125,35 @@ app.MapGet("/api/members/{memberId}", async (
 
     if (includeSource)
     {
-        // Find the assembly path - for now we'll skip decompilation as we need to store assembly paths
-        response.SourceCode = new SourceCodeInfo
+        // Get the assembly info to find the path
+        var typeId = member.TypeId;
+        var assemblyIdQuery = "SELECT AssemblyId FROM Types WHERE Id = @TypeId";
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
+        var assemblyId = await connection.QueryFirstOrDefaultAsync<string>(assemblyIdQuery, new { TypeId = typeId });
+        
+        if (!string.IsNullOrEmpty(assemblyId))
         {
-            Available = false,
-            Language = "csharp",
-            Content = "Decompilation requires assembly path storage (to be implemented)"
-        };
+            var assembly = await repository.GetAssemblyAsync(assemblyId);
+            if (assembly?.AssemblyPath != null && File.Exists(assembly.AssemblyPath))
+            {
+                var sourceCode = decompiler.DecompileMember(assembly.AssemblyPath, member.Id);
+                response.SourceCode = new SourceCodeInfo
+                {
+                    Available = sourceCode != null,
+                    Language = "csharp",
+                    Content = sourceCode
+                };
+            }
+            else
+            {
+                response.SourceCode = new SourceCodeInfo
+                {
+                    Available = false,
+                    Language = "csharp",
+                    Content = null
+                };
+            }
+        }
     }
 
     return Results.Ok(response);

@@ -21,7 +21,8 @@ public class DatabaseInitializer
             CREATE TABLE IF NOT EXISTS Assemblies (
                 Id TEXT PRIMARY KEY,
                 Name TEXT NOT NULL,
-                HasXmlDocumentation INTEGER NOT NULL
+                HasXmlDocumentation INTEGER NOT NULL,
+                AssemblyPath TEXT
             );
 
             CREATE TABLE IF NOT EXISTS Types (

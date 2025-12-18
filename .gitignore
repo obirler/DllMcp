@@ -8,6 +8,9 @@
 *.db-shm
 *.db-wal
 
+# Stored assemblies
+assemblies/
+
 # Test assemblies (built during testing)
 test/**/bin/
 test/**/obj/

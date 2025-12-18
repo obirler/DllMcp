@@ -8,6 +8,13 @@ namespace DllMcp.Api.Services;
 
 public class DecompilerService
 {
+    private readonly ILogger<DecompilerService> _logger;
+
+    public DecompilerService(ILogger<DecompilerService> logger)
+    {
+        _logger = logger;
+    }
+
     public string? DecompileMember(string assemblyPath, string memberFullName)
     {
         try
@@ -58,8 +65,19 @@ public class DecompilerService
             var code = decompiler.DecompileAsString(member.MetadataToken);
             return code;
         }
-        catch (Exception)
+        catch (FileNotFoundException ex)
         {
+            _logger.LogWarning(ex, "Assembly file not found: {Path}", assemblyPath);
+            return null;
+        }
+        catch (BadImageFormatException ex)
+        {
+            _logger.LogWarning(ex, "Invalid assembly format: {Path}", assemblyPath);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error decompiling member {Member} from {Path}", memberFullName, assemblyPath);
             return null;
         }
     }
@@ -85,8 +103,19 @@ public class DecompilerService
             var code = decompiler.DecompileTypeAsString(new FullTypeName(typeName));
             return code;
         }
-        catch (Exception)
+        catch (FileNotFoundException ex)
         {
+            _logger.LogWarning(ex, "Assembly file not found: {Path}", assemblyPath);
+            return null;
+        }
+        catch (BadImageFormatException ex)
+        {
+            _logger.LogWarning(ex, "Invalid assembly format: {Path}", assemblyPath);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error decompiling type {Type} from {Path}", typeFullName, assemblyPath);
             return null;
         }
     }

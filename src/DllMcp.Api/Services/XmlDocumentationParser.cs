@@ -32,10 +32,10 @@ public class XmlDocumentationParser
         if (!_documentation.TryGetValue(memberId, out var element))
             return (null, null, null, null, null, null);
 
-        var summary = element.Element("summary")?.Value.Trim();
-        var remarks = element.Element("remarks")?.Value.Trim();
-        var returns = element.Element("returns")?.Value.Trim();
-        var example = element.Element("example")?.Value.Trim();
+        var summary = element.Element("summary")?.Value?.Trim();
+        var remarks = element.Element("remarks")?.Value?.Trim();
+        var returns = element.Element("returns")?.Value?.Trim();
+        var example = element.Element("example")?.Value?.Trim();
 
         // Collect parameters
         var parameters = element.Elements("param")
