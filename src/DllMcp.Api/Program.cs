@@ -236,3 +236,6 @@ app.Run();
 // Request models
 record ListTypesRequest(string AssemblyId, string? Search = null, int Page = 1, int PageSize = 20);
 record GetMemberDetailsRequest(string MemberId, bool IncludeSource = false);
+
+// Make Program accessible to tests
+public partial class Program { }
