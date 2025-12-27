@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP-DLL Document Proxy Server</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .upload-section h2 {
+            color: #495057;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-input-group {
+            margin-bottom: 15px;
+        }
+
+        .file-input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .assemblies-section {
+            margin-top: 30px;
+        }
+
+        .assemblies-section h2 {
+            color: #495057;
+            margin-bottom: 20px;
+        }
+
+        .assembly-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .assembly-card h3 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .search-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .types-list {
+            margin-top: 20px;
+        }
+
+        .type-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: box-shadow 0.2s;
+        }
+
+        .type-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .type-item h4 {
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .type-item p {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .message-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .confidence-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .confidence-xml {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .confidence-ai {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .confidence-code {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 MCP-DLL Document Proxy Server</h1>
+            <p>Upload and explore .NET assemblies with intelligent documentation</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <h2>📤 Upload Assembly</h2>
+                
+                <div id="message"></div>
+
+                <form id="uploadForm">
+                    <div class="file-input-group">
+                        <label for="dllFile">📦 DLL File (Required):</label>
+                        <input type="file" id="dllFile" accept=".dll" required>
+                    </div>
+
+                    <div class="file-input-group">
+                        <label for="xmlFile">📄 XML Documentation (Optional):</label>
+                        <input type="file" id="xmlFile" accept=".xml">
+                    </div>
+
+                    <button type="submit" class="btn" id="uploadBtn">
+                        Upload Assembly
+                    </button>
+                </form>
+            </div>
+
+            <div class="assemblies-section">
+                <h2>📚 Loaded Assemblies</h2>
+                <div id="assembliesList">
+                    <div class="loading">Loading assemblies...</div>
+                </div>
+            </div>
+
+            <div id="typesSection" style="display: none;">
+                <div class="search-section">
+                    <h2>🔍 Search Types</h2>
+                    <input type="text" id="searchBox" class="search-box" placeholder="Search for types, namespaces, or members...">
+                    <div class="types-list" id="typesList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAssemblyId = null;
+
+        // Load assemblies on page load
+        loadAssemblies();
+
+        // Upload form handler
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const dllFile = document.getElementById('dllFile').files[0];
+            const xmlFile = document.getElementById('xmlFile').files[0];
+            const uploadBtn = document.getElementById('uploadBtn');
+            const messageDiv = document.getElementById('message');
+
+            if (!dllFile) {
+                showMessage('Please select a DLL file', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('dll', dllFile);
+            if (xmlFile) {
+                formData.append('xml', xmlFile);
+            }
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+
+            try {
+                const response = await fetch('/api/assemblies/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('✅ ' + result.message, 'success');
+                    document.getElementById('uploadForm').reset();
+                    loadAssemblies();
+                } else {
+                    showMessage('❌ Error: ' + (result.error || 'Upload failed'), 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Error: ' + error.message, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Assembly';
+            }
+        });
+
+        // Load assemblies
+        async function loadAssemblies() {
+            const assembliesList = document.getElementById('assembliesList');
+            
+            try {
+                const response = await fetch('/api/assemblies');
+                const assemblies = await response.json();
+
+                if (assemblies.length === 0) {
+                    assembliesList.innerHTML = '<p style="color: #6c757d;">No assemblies loaded yet. Upload one to get started!</p>';
+                    return;
+                }
+
+                assembliesList.innerHTML = assemblies.map(assembly => `
+                    <div class="assembly-card">
+                        <h3>${assembly.name}</h3>
+                        <div>
+                            <span class="badge ${assembly.hasXmlDocumentation ? 'badge-success' : 'badge-warning'}">
+                                ${assembly.hasXmlDocumentation ? '🛡️ Has XML Docs' : '⚠️ No XML Docs'}
+                            </span>
+                        </div>
+                        <button class="btn" style="margin-top: 10px;" onclick="viewTypes('${assembly.id}')">
+                            Browse Types
+                        </button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                assembliesList.innerHTML = '<p style="color: #dc3545;">Error loading assemblies: ' + error.message + '</p>';
+            }
+        }
+
+        // View types for an assembly
+        async function viewTypes(assemblyId) {
+            currentAssemblyId = assemblyId;
+            const typesSection = document.getElementById('typesSection');
+            const typesList = document.getElementById('typesList');
+            
+            typesSection.style.display = 'block';
+            typesList.innerHTML = '<div class="loading">Loading types...</div>';
+
+            try {
+                const response = await fetch(`/api/assemblies/${assemblyId}/types?pageSize=50`);
+                const types = await response.json();
+
+                if (types.length === 0) {
+                    typesList.innerHTML = '<p style="color: #6c757d;">No types found.</p>';
+                    return;
+                }
+
+                displayTypes(types);
+            } catch (error) {
+                typesList.innerHTML = '<p style="color: #dc3545;">Error loading types: ' + error.message + '</p>';
+            }
+        }
+
+        // Display types
+        function displayTypes(types) {
+            const typesList = document.getElementById('typesList');
+            
+            typesList.innerHTML = types.map(type => `
+                <div class="type-item">
+                    <h4>${type.name}</h4>
+                    <p><strong>Namespace:</strong> ${type.namespace || 'None'}</p>
+                    <p><strong>Kind:</strong> ${type.kind}</p>
+                    ${type.summary ? `<p><strong>Summary:</strong> ${type.summary}</p>` : ''}
+                    ${type.summary ? '<span class="confidence-indicator confidence-xml">🛡️ Official</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        // Search types
+        let searchTimeout;
+        document.getElementById('searchBox').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const search = e.target.value;
+
+            if (!currentAssemblyId) return;
+
+            searchTimeout = setTimeout(async () => {
+                const typesList = document.getElementById('typesList');
+                typesList.innerHTML = '<div class="loading">Searching...</div>';
+
+                try {
+                    const url = `/api/assemblies/${currentAssemblyId}/types?search=${encodeURIComponent(search)}&pageSize=50`;
+                    const response = await fetch(url);
+                    const types = await response.json();
+
+                    displayTypes(types);
+                } catch (error) {
+                    typesList.innerHTML = '<p style="color: #dc3545;">Error searching: ' + error.message + '</p>';
+                }
+            }, 300);
+        });
+
+        // Show message
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = `message message-${type}`;
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -3,6 +3,18 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# Stored assemblies
+assemblies/
+
+# Test assemblies (built during testing)
+test/**/bin/
+test/**/obj/
+
 # User-specific files
 *.rsuser
 *.suo

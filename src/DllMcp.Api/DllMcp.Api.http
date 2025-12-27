@@ -1,0 +1,6 @@
+@DllMcp.Api_HostAddress = http://localhost:5193
+
+GET {{DllMcp.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
